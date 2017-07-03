@@ -2,16 +2,24 @@ import discord
 from discord.ext import commands
 import variables
 import command
+import logging
+import asyncio
+import chatlogs
+import datetime
+import queue
 
-
-
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 description = '''This may or not be right.'''
 
 if not command.updateConfig():
     print("Configuration could not be loaded")
 else:
-    bot = commands.Bot(command_prefix='!', description=description, pm_help= True   )
+    bot = commands.Bot(command_prefix='!', description=description, pm_help= True)
 
 
 @bot.event
@@ -20,7 +28,10 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-
+    server = discord.utils.get(bot.servers, id = str(variables.modMailServerID))
+    variables.modMailChannel = discord.utils.get(server.channels, id=str(variables.modMailChannelID))
+    #asyncio.ensure_future(logging())
+    asyncio.ensure_future(modMail())
 
 @bot.command(pass_context= True, aliases =["Clear", "CLEAR"])
 async def clear(ctx, num : int):
@@ -43,13 +54,17 @@ async def list():
     await command.list(bot)
 
 @bot.command(pass_context = True)
+async def leaders(ctx):
+    await command.leaders(bot, ctx)
+
+@bot.command(pass_context = True)
 async def commands(ctx):
     await command.help(bot, ctx)
 @bot.command(pass_context = True)
 async def edit(ctx):
     await command.edit(bot, ctx)
 
-@bot.command(pass_context = True)
+@bot.command(pass_context = True, aliases = ["remove"])
 async def delete(ctx):
     await command.delete(bot, ctx)
 
@@ -57,14 +72,79 @@ async def delete(ctx):
 async def update(ctx):
     await command.update(bot, ctx)
 
-#@bot.command()
-#async def schedule():
-#    await command.schedule(bot)
+@bot.command(pass_context = True)
+async def currency(ctx):
+    await command.currency(bot, ctx)
+
+@bot.command(pass_context = True)
+async def bet(ctx):
+    await command.bet(bot, ctx)
+@bot.command()
+async def schedule():
+    await command.schedule(bot)
 
 @bot.command(aliases =["Ddt", "DDT"])
 async def ddt():
     await command.ddt(bot)
 
+@bot.command(pass_context = True)
+async def afterdark(ctx):
+    await command.afterdark(bot, ctx)
+@bot.command(pass_context = True)
+async def blacklist(ctx):
+    await command.blacklist(bot, ctx)
+@bot.command(pass_context = True)
+async def logs(ctx):
+    await command.logs(bot, ctx)
+
+@bot.command(pass_context = True)
+async def total(ctx):
+    await command.total(bot, ctx)
+
+@bot.command(pass_context = True)
+async def user(ctx):
+    await command.user(bot, ctx)
+
+@bot.command(pass_context = True)
+async def sub(ctx):
+    await command.sub(bot, ctx)
+
+@bot.command(pass_context = True)
+async def archive(ctx):
+    await command.archive(bot, ctx)
+@bot.command(pass_context = True)
+async def join(ctx):
+    await command.join(bot, ctx)
+async def modMail():
+     await bot.wait_until_ready()
+     while not bot.is_closed:
+         await command.modmail(bot)
+         await asyncio.sleep(60)
+
+async def logging():
+     await bot.wait_until_ready()
+     current = datetime.date.today()
+     while(True):
+         counter = 0
+         while counter < 3:
+             counter += 1
+             date = datetime.date.today()
+             if(current.day != date.day):
+                 for log in logs:
+                     await variables.logs[log].writeToFile()
+                     await variables.logs[log].uploadFile()
+                 variables.logs = {}
+                 current = date
+                 break
+             await asyncio.sleep(10)
+             for log in variables.logs:
+                 print("Writing to Files")
+                 await variables.logs[log].writeToFile()
+         for log in variables.logs:
+             pass
+             #await variables.logs[log].uploadFile()
+     #google drive upload
+     
 @bot.event
 async def on_member_join(member):
     server = member.server
@@ -72,6 +152,7 @@ async def on_member_join(member):
     fmt = fmt.replace("user", '0.mention')
     fmt = fmt.strip("\"\"")
     await bot.send_message(server, fmt.format(member))
+
 
 @bot.event
 async def on_member_remove(member):
@@ -86,15 +167,34 @@ async def on_member_remove(member):
 @bot.event
 async def on_message(message):
     msg = message.content
+    variables.messages.put(message)
+    if variables.logging is False:
+        asyncio.ensure_future(chatlogs.log())
+    try:
+        variables.freq[message.author.id] = variables.freq[message.author.id] + 1
+    except KeyError:
+        variables.freq[message.author.id] = 0
+    try:
+        variables.monthFreq[message.author.id] = variables.monthFreq[message.author.id] + 1
+    except KeyError:
+        variables.monthFreq[message.author.id] = 0
+    try:
+        variables.weekFreq[message.author.id] = variables.weekFreq[message.author.id] + 1
+    except KeyError:
+        variables.weekFreq[message.author.id] = 0
     if bot.user in message.mentions:
-        await bot.send_message(message.channel, "Who am I banning?")
+        await bot.send_message(message.channel, "You tryna start something?")
     if message.author.id != bot.user.id:
         if "block me back" in msg.lower():
             await bot.send_message(message.channel, message.author.mention + " Blocked Back.")
-        if command.filterActive and not msg.startswith('!filter') and any(x in msg.lower() for x in variables.contentFilter):
+        if command.filterActive and not msg.startswith('!filter') and any(x in msg.lower() for x in variables.contentFilter) and "clips.twitch.tv" not in msg:
+            variables.counter += 1
             await bot.delete_message(message)
-            await bot.send_message(message.channel, message.author.mention + " you violated our content filter.")
+            await bot.send_message(message.channel, message.author.mention + " you violated our content filter. I've removed " + str(variables.counter) + " messages.")
+            command.saveConfig()
             return
+        if variables.dark:
+            variables.purge.append(message)
         for cmd in variables.textCommands:
             if msg.startswith('!' + cmd):
                 await bot.send_message(message.channel, variables.textCommands[cmd])
