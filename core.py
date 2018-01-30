@@ -8,11 +8,11 @@ import chatlogs
 import datetime
 import queue
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+#logger = logging.getLogger('discord')
+#logger.setLevel(logging.DEBUG)
+#handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+#handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+#logger.addHandler(handler)
 
 description = '''This may or not be right.'''
 
@@ -28,10 +28,12 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    server = discord.utils.get(bot.servers, id = str(variables.modMailServerID))
+    server = discord.utils.get(bot.servers, id = str(variables.serverID))
     variables.modMailChannel = discord.utils.get(server.channels, id=str(variables.modMailChannelID))
+    variables.postsChannel = discord.utils.get(server.channels, id=str(variables.postID))
     #asyncio.ensure_future(logging())
     asyncio.ensure_future(modMail())
+    asyncio.ensure_future(posts())
 
 @bot.command(pass_context= True, aliases =["Clear", "CLEAR"])
 async def clear(ctx, num : int):
@@ -118,9 +120,18 @@ async def join(ctx):
 async def modMail():
      await bot.wait_until_ready()
      while not bot.is_closed:
-         await command.modmail(bot)
+         try:
+             await command.modmail(bot)
+         except Exception:
+             pass
          await asyncio.sleep(60)
-
+async def posts():
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        try:
+            await command.posts(bot)
+        except Exception:
+            pass
 async def logging():
      await bot.wait_until_ready()
      current = datetime.date.today()
@@ -167,9 +178,11 @@ async def on_member_remove(member):
 @bot.event
 async def on_message(message):
     msg = message.content
-    variables.messages.put(message)
-    if variables.logging is False:
-        asyncio.ensure_future(chatlogs.log())
+    #if message.author.id == '186866281465643008':
+        #await bot.add_reaction(message,'🇱')
+    #variables.messages.put(message)
+    #if variables.logging is False:
+        #asyncio.ensure_future(chatlogs.log())
     try:
         variables.freq[message.author.id] = variables.freq[message.author.id] + 1
     except KeyError:
@@ -190,8 +203,7 @@ async def on_message(message):
         if command.filterActive and not msg.startswith('!filter') and any(x in msg.lower() for x in variables.contentFilter) and "clips.twitch.tv" not in msg:
             variables.counter += 1
             await bot.delete_message(message)
-            await bot.send_message(message.channel, message.author.mention + " you violated our content filter. I've removed " + str(variables.counter) + " messages.")
-            command.saveConfig()
+            await bot.send_message(message.channel, message.author.mention + " you violated our content filter.")
             return
         if variables.dark:
             variables.purge.append(message)

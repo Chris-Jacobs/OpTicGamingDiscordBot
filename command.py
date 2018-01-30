@@ -119,6 +119,7 @@ async def update(bot, ctx):
             await bot.say('Config failed to Update.')
 
 async def list(bot):
+    print(variables.textCommands.keys())
     await(bot.say(variables.textCommands.keys()))
 
 async def add(bot, ctx):
@@ -135,7 +136,7 @@ async def add(bot, ctx):
 
 async def edit(bot, ctx):
     perms = ctx.message.channel.permissions_for(ctx.message.author)
-    if perms.manage_channels:
+    if perms.manage_channels or ctx.message.author.id == '111981607732162560':
         str = ctx.message.content.replace("!edit", "").strip()
         parts = str.split(' ', 1)
         if parts[0] in variables.textCommands:
@@ -198,7 +199,7 @@ async def total(bot, ctx):
         await bot.send_message(ctx.message.channel, user.mention + " you have been blacklisted from the leaderboard feature.")
 async def user(bot, ctx):
     string = ctx.message.content.replace("!user", "").strip()
-    await bot.say("http://www.reddit.com/u/" + string)
+    await bot.say("http://www.reddit.com/u/" + string + '/overview')
 
 async def sub(bot, ctx):
     string = ctx.message.content.replace("!sub", "").strip()
@@ -458,7 +459,30 @@ async def modmail(bot):
             s += '\n'
             s += str(mail.body_markdown)
             await bot.send_message(variables.modMailChannel,s)
-
+async def posts(bot):
+    reddit = praw.Reddit(client_id=variables.client_id,
+                client_secret=variables.client_secret,
+                user_agent=variables.user_agent,
+                username=variables.username,
+                password=variables.password)
+    subreddit = reddit.subreddit(variables.subreddit)
+    counter = 0
+    for submission in subreddit.stream.submissions():
+        if counter < 100:
+            counter += 1
+            continue
+        title = submission.title
+        url = submission.url
+        user = str(submission.author)
+        id = submission.id
+        print(title)
+        print(url)
+        print(user)
+        s = "**" + title + "** *by " + user + "*\n"
+        s += "ID = '" + str(id) + "'\n"
+        s += "User = http://www.reddit.com/u/" + user + '/overview\n'
+        s += url + '\n'
+        await bot.send_message(variables.postsChannel, s)
 async def archive(bot, ctx):
     id = ctx.message.content.replace("!archive", "").strip()
 

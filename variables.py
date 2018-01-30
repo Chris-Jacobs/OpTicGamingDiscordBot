@@ -1,24 +1,24 @@
 import queue
-token = "" #if real
-modMailServerID = 305374394266681345
-modMailChannelID = 309392299664867328
-username = "Crim_Bot"
-password = ""
-subreddit = "OpTicGaming"
-user_agent = "PyOGSidebar 1.0"
-twitchKey = ""
-client_secret = ""
-client_id = ""
-#token = "" #if testing
-#subreddit = "OpTicGamingSandbox"
-#modMailServerID = 252969515200020501
-#modMailChannelID = 309394244932599818
+
+import sqlite3
+conn = sqlite3.connect('keys.db')
+c = conn.cursor()
+username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest  = c.execute("SELECT * FROM Keys").fetchone()
+c.close()
+
 
 modMailChannel = None
-
+postsChannel = None
+subreddit = "OpTicGaming"
+serverID = 305374394266681345
+modMailChannelID = 309392299664867328
+postID = 357559384529698816
+#testing
+#serverID = 252969515200020501
+#modMailChannelID = 309394244932599818
+#postID = 407635043163308032
 modMail = []
 timeout = 15
-
 textCommands = {}
 contentFilter = []
 counter = 0
@@ -35,6 +35,8 @@ currency = {
 
 dark = False
 purge = []
+
+removalReasons = {}
 
 
 bets = []
