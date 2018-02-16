@@ -7,6 +7,8 @@ import json
 import discord
 import jsonpickle
 import datetime
+import time
+import calendar
 
 filterActive = True
 
@@ -460,21 +462,16 @@ async def modmail(bot):
             s += str(mail.body_markdown)
             await bot.send_message(variables.modMailChannel,s)
 async def posts(bot):
-    reddit = praw.Reddit(client_id=variables.client_id,
-                client_secret=variables.client_secret,
-                user_agent=variables.user_agent,
-                username=variables.username,
-                password=variables.password)
+    reddit = praw.Reddit(client_id=variables.client_id,client_secret=variables.client_secret,user_agent=variables.user_agent,username=variables.username,password=variables.password)
     subreddit = reddit.subreddit(variables.subreddit)
-    counter = 0
-    for submission in subreddit.stream.submissions():
-        if counter < 100:
-            counter += 1
-            continue
+    temp = int(time.time() - 40)
+    for submission in subreddit.submissions(start = variables.retrieveTime, end = temp):
+        print('hit')
+        print(submission.created_utc)
         title = submission.title
         url = submission.url
         user = str(submission.author)
-        id = submission.id
+        id = submission.id  
         print(title)
         print(url)
         print(user)
@@ -482,7 +479,10 @@ async def posts(bot):
         s += "ID = '" + str(id) + "'\n"
         s += "User = http://www.reddit.com/u/" + user + '/overview\n'
         s += url + '\n'
+        print(s)
         await bot.send_message(variables.postsChannel, s)
+    variables.retrieveTime = temp
+    print('done')
 async def archive(bot, ctx):
     id = ctx.message.content.replace("!archive", "").strip()
 

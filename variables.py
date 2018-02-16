@@ -1,11 +1,12 @@
 import queue
-
+import datetime
+import time
 import sqlite3
 conn = sqlite3.connect('keys.db')
 c = conn.cursor()
 username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest  = c.execute("SELECT * FROM Keys").fetchone()
 c.close()
-
+print(username)
 
 modMailChannel = None
 postsChannel = None
@@ -18,6 +19,8 @@ postID = 357559384529698816
 #modMailChannelID = 309394244932599818
 #postID = 407635043163308032
 modMail = []
+retrieveTime = int(time.time() - 40)
+#retrieveTime = 1517287992
 timeout = 15
 textCommands = {}
 contentFilter = []

@@ -7,7 +7,7 @@ import asyncio
 import chatlogs
 import datetime
 import queue
-
+import time
 #logger = logging.getLogger('discord')
 #logger.setLevel(logging.DEBUG)
 #handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -111,7 +111,7 @@ async def user(ctx):
 async def sub(ctx):
     await command.sub(bot, ctx)
 
-@bot.command(pass_context = True)
+@bot.command(pass_context = True, aliases = ['Archive',  'arch'])
 async def archive(ctx):
     await command.archive(bot, ctx)
 @bot.command(pass_context = True)
@@ -128,10 +128,12 @@ async def modMail():
 async def posts():
     await bot.wait_until_ready()
     while not bot.is_closed:
+        print('posts')
         try:
             await command.posts(bot)
         except Exception:
             pass
+        await asyncio.sleep(60)
 async def logging():
      await bot.wait_until_ready()
      current = datetime.date.today()
@@ -164,7 +166,6 @@ async def on_member_join(member):
     fmt = fmt.strip("\"\"")
     await bot.send_message(server, fmt.format(member))
 
-
 @bot.event
 async def on_member_remove(member):
     server = member.server
@@ -172,7 +173,6 @@ async def on_member_remove(member):
     fmt = fmt.replace("user", '0.mention')
     fmt = fmt.strip("\"\"")
     await bot.send_message(server, fmt.format(member))
-
 
 
 @bot.event
