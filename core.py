@@ -115,10 +115,6 @@ async def user(ctx):
 @bot.command(pass_context = True)
 async def sub(ctx):
     await command.sub(bot, ctx)
-
-@bot.command(pass_context = True, aliases = ['Archive',  'arch'])
-async def archive(ctx):
-    await command.archive(bot, ctx)
 @bot.command(pass_context = True)
 async def join(ctx):
     await command.join(bot, ctx)
