@@ -66,7 +66,7 @@ async def commands(ctx):
 async def edit(ctx):
     await command.edit(bot, ctx)
 
-@bot.command(pass_context = True, aliases = ["remove"])
+@bot.command(pass_context = True)
 async def delete(ctx):
     await command.delete(bot, ctx)
 
@@ -88,7 +88,12 @@ async def schedule():
 @bot.command(aliases =["Ddt", "DDT"])
 async def ddt():
     await command.ddt(bot)
-
+@bot.command(pass_context = True)
+async def remove(ctx):
+    await command.remove(bot, ctx)
+@bot.command(pass_context = True)
+async def archive(ctx):
+    await command.archive(bot, ctx)
 @bot.command(pass_context = True)
 async def afterdark(ctx):
     await command.afterdark(bot, ctx)
@@ -128,7 +133,6 @@ async def modMail():
 async def posts():
     await bot.wait_until_ready()
     while not bot.is_closed:
-        print('posts')
         try:
             await command.posts(bot)
         except Exception:

@@ -466,7 +466,6 @@ async def posts(bot):
     subreddit = reddit.subreddit(variables.subreddit)
     temp = int(time.time() - 40)
     for submission in subreddit.submissions(start = variables.retrieveTime, end = temp):
-        print('hit')
         print(submission.created_utc)
         title = submission.title
         url = submission.url
@@ -480,13 +479,39 @@ async def posts(bot):
         s += "User = http://www.reddit.com/u/" + user + '/overview\n'
         s += url + '\n'
         print(s)
-        await bot.send_message(variables.postsChannel, s)
+        if id != variables.lastID:
+            await bot.send_message(variables.postsChannel, s)
+        variables.lastID = id
     variables.retrieveTime = temp
-    print('done')
+async def remove(bot, ctx):
+    print('remove')
+    if (ctx.message.channel.id != str(variables.postID)):
+        return
+    print('right channel')
+    id = ctx.message.content.replace("!remove", "").strip()
+    r = praw.Reddit(client_id=variables.client_id,
+                client_secret=variables.client_secret,
+                user_agent=variables.user_agent,
+                username=variables.username,
+                password=variables.password)
+    if not id:
+        await bot.say("No ID given.")
+        return
+    submission = r.submission(id=id)
+    if submission.banned_by is not None:
+        await bot.say("Thread already removed by: " + submission.banned_by)
+        return
+    url = submission.url
+    try:
+        submission.mod.remove()
+        await bot.say("Thread Removed: " + url)
+    except Exception:
+        await bot.say("Error Removing Thread: " + url)
+        
 async def archive(bot, ctx):
+    if (ctx.message.channel.id != str(variables.modMailChannelID)):
+        return
     id = ctx.message.content.replace("!archive", "").strip()
-
-
     r = praw.Reddit(client_id=variables.client_id,
                 client_secret=variables.client_secret,
                 user_agent=variables.user_agent,

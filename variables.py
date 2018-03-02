@@ -20,6 +20,7 @@ postID = 357559384529698816
 #postID = 407635043163308032
 modMail = []
 retrieveTime = int(time.time() - 40)
+lastID = None
 #retrieveTime = 1517287992
 timeout = 15
 textCommands = {}
