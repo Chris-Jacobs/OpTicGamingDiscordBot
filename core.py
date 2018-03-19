@@ -92,6 +92,9 @@ async def ddt():
 async def remove(ctx):
     await command.remove(bot, ctx)
 @bot.command(pass_context = True)
+async def post(ctx):
+    await command.post(bot, ctx)
+@bot.command(pass_context = True)
 async def archive(ctx):
     await command.archive(bot, ctx)
 @bot.command(pass_context = True)

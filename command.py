@@ -9,7 +9,7 @@ import jsonpickle
 import datetime
 import time
 import calendar
-
+from collections import deque
 filterActive = True
 
 
@@ -465,6 +465,7 @@ async def posts(bot):
     reddit = praw.Reddit(client_id=variables.client_id,client_secret=variables.client_secret,user_agent=variables.user_agent,username=variables.username,password=variables.password)
     subreddit = reddit.subreddit(variables.subreddit)
     temp = int(time.time() - 40)
+    d = deque()
     for submission in subreddit.submissions(start = variables.retrieveTime, end = temp):
         print(submission.created_utc)
         title = submission.title
@@ -480,14 +481,14 @@ async def posts(bot):
         s += url + '\n'
         print(s)
         if id != variables.lastID:
-            await bot.send_message(variables.postsChannel, s)
+            d.appendleft(s)
         variables.lastID = id
     variables.retrieveTime = temp
+    for s in d:
+        await bot.send_message(variables.postsChannel, s)
 async def remove(bot, ctx):
-    print('remove')
-    if (ctx.message.channel.id != str(variables.postID)):
+    if (ctx.message.server.id != str(variables.serverID)):
         return
-    print('right channel')
     id = ctx.message.content.replace("!remove", "").strip()
     r = praw.Reddit(client_id=variables.client_id,
                 client_secret=variables.client_secret,
@@ -507,7 +508,43 @@ async def remove(bot, ctx):
         await bot.say("Thread Removed: " + url)
     except Exception:
         await bot.say("Error Removing Thread: " + url)
-        
+async def post(bot, ctx):
+    if (ctx.message.server.id != str(variables.serverID)):
+        return
+    content = ctx.message.content.replace("!post", "").strip()
+    r = praw.Reddit(client_id=variables.modClient,
+                client_secret=variables.modSecret,
+                user_agent=variables.user_agent,
+                username=variables.modUsername,
+                password=variables.modPassword)
+    #get reddit
+    if len(content) == 6:
+        try:
+            submission = r.submission(id = content)
+        except Exception:
+            submission = None
+    elif "reddit" in content or "redd.it" in content:
+        try:
+            submission = r.submission(url = content)
+        except Exception:
+            submission = None
+    else:
+        submission = None
+    if submission is not None:
+        title = submission.title
+        body = submission.selftext
+        print(title)
+        try:
+            newSubmission = r.subreddit(variables.subreddit).submit(title = title, selftext = body, send_replies = False)
+            s = newSubmission.url + "\n"
+            s += "ID = '" + newSubmission.id + "'"
+            await bot.say(s)
+        except Exception:
+            await bot.say("Error Posting Thread")
+        newSubmission.mod.sticky(state = True, bottom = True)
+    else:
+        await bot.say("Error Finding Thread")
+
 async def archive(bot, ctx):
     if (ctx.message.channel.id != str(variables.modMailChannelID)):
         return

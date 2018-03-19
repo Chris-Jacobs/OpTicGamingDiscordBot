@@ -4,9 +4,8 @@ import time
 import sqlite3
 conn = sqlite3.connect('keys.db')
 c = conn.cursor()
-username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest  = c.execute("SELECT * FROM Keys").fetchone()
+username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest, modUsername, modPassword, modSecret, modClient  = c.execute("SELECT * FROM Keys").fetchone()
 c.close()
-print(username)
 
 modMailChannel = None
 postsChannel = None
@@ -18,6 +17,9 @@ postID = 357559384529698816
 #serverID = 252969515200020501
 #modMailChannelID = 309394244932599818
 #postID = 407635043163308032
+
+
+
 modMail = []
 retrieveTime = int(time.time() - 40)
 lastID = None
