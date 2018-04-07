@@ -464,26 +464,27 @@ async def modmail(bot):
 async def posts(bot):
     reddit = praw.Reddit(client_id=variables.client_id,client_secret=variables.client_secret,user_agent=variables.user_agent,username=variables.username,password=variables.password)
     subreddit = reddit.subreddit(variables.subreddit)
-    temp = int(time.time() - 40)
     d = deque()
-    for submission in subreddit.submissions(start = variables.retrieveTime, end = temp):
-        print(submission.created_utc)
+    tempID = None
+    for submission in subreddit.new(limit=15):
         title = submission.title
         url = submission.url
         user = str(submission.author)
-        id = submission.id  
-        print(title)
-        print(url)
-        print(user)
-        s = "**" + title + "** *by " + user + "*\n"
-        s += "ID = '" + str(id) + "'\n"
-        s += "User = http://www.reddit.com/u/" + user + '/overview\n'
-        s += url + '\n'
-        print(s)
-        if id != variables.lastID:
+        id = submission.id
+        if tempID is None:
+            tempID = id
+        if id > variables.lastID:
+            s = "**" + title + "** *by " + user + "*\n"
+            s += "ID = '" + str(id) + "'\n"
+            s += "User = http://www.reddit.com/u/" + user + '/overview\n'
+            s += url + '\n'
+            print(s)
             d.appendleft(s)
-        variables.lastID = id
-    variables.retrieveTime = temp
+        else:
+            break
+    variables.lastID = tempID
+    with open('id.txt', 'w') as f:
+        f.write(variables.lastID)
     for s in d:
         await bot.send_message(variables.postsChannel, s)
 async def remove(bot, ctx):

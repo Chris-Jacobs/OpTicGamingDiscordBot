@@ -22,7 +22,15 @@ postID = 357559384529698816
 
 modMail = []
 retrieveTime = int(time.time() - 40)
-lastID = None
+lastID = "8aeoo4"
+try:
+    with open('id.txt', 'r') as f:
+        id = f.read()
+        if len(id) == 6:
+            lastID = id
+except Exception:
+    pass
+print(lastID)
 #retrieveTime = 1517287992
 timeout = 15
 textCommands = {}
