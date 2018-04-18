@@ -4,7 +4,7 @@ import time
 import sqlite3
 conn = sqlite3.connect('keys.db')
 c = conn.cursor()
-username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest, modUsername, modPassword, modSecret, modClient  = c.execute("SELECT * FROM Keys").fetchone()
+username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest, modUsername, modPassword, modSecret, modClient, twitterKey, twitterSecret, twitterToken, twitterTokenSecret  = c.execute("SELECT * FROM Keys").fetchone()
 c.close()
 
 modMailChannel = None

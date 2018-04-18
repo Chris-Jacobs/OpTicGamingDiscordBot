@@ -121,6 +121,9 @@ async def sub(ctx):
 @bot.command(pass_context = True)
 async def join(ctx):
     await command.join(bot, ctx)
+@bot.command(pass_context = True)
+async def whendoesopticplay(ctx):
+    await command.when(bot, ctx)
 async def modMail():
      await bot.wait_until_ready()
      while not bot.is_closed:

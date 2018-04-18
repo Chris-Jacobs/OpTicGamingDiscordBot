@@ -9,6 +9,7 @@ import jsonpickle
 import datetime
 import time
 import calendar
+import twitter
 from collections import deque
 filterActive = True
 
@@ -158,7 +159,28 @@ async def delete(bot, ctx):
             await bot.say("\"" + str + "\" command has been deleted.")
         else :
             await bot.say("\"" + str + "\" has no command to delete.")
-
+def twitterHelper(api, game, id = None, depth = 0):
+    if depth == 3:
+        return "Tweet not found or too old"
+    tweets = api.GetUserTimeline(2303682049, max_id = id)
+    for tweet in tweets:
+        lower = tweet.text.lower()
+        if("#whendoesopticplay" in lower and game.lower() in lower):
+            link = "<https://twitter.com/OpTicUpdate/status/" + tweet.id_str + ">"
+            date = tweet.created_at
+            s = "```" + tweet.text + "```\n"
+            s += date + "\n"
+            s += link
+            return s
+    return twitterHelper(api, game, tweet.id, depth + 1)
+async def when(bot, ctx):
+    game = ctx.message.content.replace("!whendoesopticplay", "").strip()
+    print(game)
+    api = twitter.Api(consumer_key=variables.twitterKey,
+                  consumer_secret=variables.twitterSecret,
+                  access_token_key=variables.twitterToken,
+                  access_token_secret=variables.twitterTokenSecret)
+    await(bot.say(twitterHelper(api, game)))
 async def ddt(bot):
     now = datetime.datetime.now()
     if not hasattr(ddt, "link") or not hasattr(ddt, "time") or ddt.time + timedelta(minutes= variables.timeout) < now:
