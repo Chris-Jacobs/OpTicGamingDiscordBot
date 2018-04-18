@@ -453,7 +453,7 @@ async def modmail(bot):
                 password=variables.password)
     mm = reddit.subreddit('OpTicGaming').modmail
     for msg in mm.conversations(state='all'):
-        mail = msg.messages[0]
+        mail = msg.messages[-1]
         if str(msg) not in variables.modMail:
             variables.modMail.append(str(msg))
             s  = 'New Modmail from: ' + mail.author.name + '\n'
