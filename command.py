@@ -121,9 +121,12 @@ async def update(bot, ctx):
         else:
             await bot.say('Config failed to Update.')
 
-async def list(bot):
-    print(variables.textCommands.keys())
-    await(bot.say(variables.textCommands.keys()))
+async def commands(bot):
+    keys = list(variables.textCommands.keys())
+    first = keys[:int(len(keys)/2)]
+    second = keys[int(len(keys)/2):]
+    await(bot.say(first))
+    await(bot.say(second))
 
 async def add(bot, ctx):
     perms = ctx.message.channel.permissions_for(ctx.message.author)
@@ -477,12 +480,17 @@ async def modmail(bot):
     for msg in mm.conversations(state='all'):
         mail = msg.messages[-1]
         if str(msg) not in variables.modMail:
-            variables.modMail.append(str(msg))
             s  = 'New Modmail from: ' + mail.author.name + '\n'
             s += "ID = '" + str(msg) + "'\n"
             s += '\n'
             s += str(mail.body_markdown)
-            await bot.send_message(variables.modMailChannel,s)
+            if "Some dumbass didn't tag his thread." in mail.body_markdown:
+                print('Not tagged')
+                reddit.subreddit('OpTicGaming').modmail(str(msg)).archive()
+                await bot.send_message(variables.postsChannel,s)
+            else:
+                variables.modMail.append(str(msg))
+                await bot.send_message(variables.modMailChannel,s)
 async def posts(bot):
     reddit = praw.Reddit(client_id=variables.client_id,client_secret=variables.client_secret,user_agent=variables.user_agent,username=variables.username,password=variables.password)
     subreddit = reddit.subreddit(variables.subreddit)

@@ -8,6 +8,7 @@ import chatlogs
 import datetime
 import queue
 import time
+import voice as v
 #logger = logging.getLogger('discord')
 #logger.setLevel(logging.DEBUG)
 #handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -33,7 +34,8 @@ async def on_ready():
     variables.postsChannel = discord.utils.get(server.channels, id=str(variables.postID))
     #asyncio.ensure_future(logging())
     asyncio.ensure_future(modMail())
-    asyncio.ensure_future(posts())
+    if not variables.test:
+        asyncio.ensure_future(posts())
 
 @bot.command(pass_context= True, aliases =["Clear", "CLEAR"])
 async def clear(ctx, num : int):
@@ -53,7 +55,7 @@ async def add(ctx):
 
 @bot.command()
 async def list():
-    await command.list(bot)
+    await command.commands(bot)
 
 @bot.command(pass_context = True)
 async def leaders(ctx):
@@ -81,10 +83,6 @@ async def currency(ctx):
 @bot.command(pass_context = True)
 async def bet(ctx):
     await command.bet(bot, ctx)
-@bot.command()
-async def schedule():
-    await command.schedule(bot)
-
 @bot.command(aliases =["Ddt", "DDT"])
 async def ddt():
     await command.ddt(bot)
@@ -97,9 +95,6 @@ async def post(ctx):
 @bot.command(pass_context = True)
 async def archive(ctx):
     await command.archive(bot, ctx)
-@bot.command(pass_context = True)
-async def afterdark(ctx):
-    await command.afterdark(bot, ctx)
 @bot.command(pass_context = True)
 async def blacklist(ctx):
     await command.blacklist(bot, ctx)
@@ -124,6 +119,10 @@ async def join(ctx):
 @bot.command(pass_context = True)
 async def whendoesopticplay(ctx):
     await command.when(bot, ctx)
+@bot.command(pass_context = True)
+async def voice(ctx):
+    await v.main(bot, ctx)
+
 async def modMail():
      await bot.wait_until_ready()
      while not bot.is_closed:
