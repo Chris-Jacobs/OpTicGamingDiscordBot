@@ -625,8 +625,8 @@ def updateConfig():
         variables.monthFreq = json.loads(config[7])
         variables.weekFreq = json.loads(config[8])
         variables.blacklist = json.loads(config[9])
-
-
+        wiki = r.subreddit(variables.subreddit).wiki['freetalk'].content_md
+        variables.sayings =  wiki.split('\n')
         return True
     except Exception:
         return False

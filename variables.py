@@ -22,7 +22,7 @@ if test:
     voiceID = 440226989316636675
     token = tokenTest
 
-
+sayings = {}
 
 modMail = []
 voice = {}

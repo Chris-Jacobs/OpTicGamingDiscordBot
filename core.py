@@ -9,6 +9,7 @@ import datetime
 import queue
 import time
 import voice as v
+import random
 #logger = logging.getLogger('discord')
 #logger.setLevel(logging.DEBUG)
 #handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -166,10 +167,14 @@ async def logging():
 @bot.event
 async def on_member_join(member):
     server = member.server
-    fmt = variables.textCommands['welcome']
-    fmt = fmt.replace("user", '0.mention')
-    fmt = fmt.strip("\"\"")
-    await bot.send_message(server, fmt.format(member))
+    #fmt = variables.textCommands['welcome']
+    #fmt = fmt.replace("user", '0.mention')
+    #fmt = fmt.strip("\"\"")
+    saying = random.choice(variables.sayings).replace("\r", "")
+    if saying[-1] == 's':
+        saying = saying[:-1]
+    s = member.mention + ", " + saying  + ". Make sure to read the rules of the server in <#155854416816242688>"
+    await bot.send_message(server, s)
 
 @bot.event
 async def on_member_remove(member):
