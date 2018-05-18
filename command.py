@@ -506,7 +506,7 @@ async def posts(bot):
         if id > variables.lastID:
             s = "**" + title + "** *by " + user + "*\n"
             s += "ID = '" + str(id) + "'\n"
-            s += "User = http://www.reddit.com/u/" + user + '/overview\n'
+            s += "User = <http://www.reddit.com/u/" + user + '/overview>\n'
             s += url + '\n'
             print(s)
             d.appendleft(s)
