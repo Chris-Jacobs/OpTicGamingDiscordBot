@@ -10,6 +10,8 @@ import queue
 import time
 import voice as v
 import random
+import db
+
 #logger = logging.getLogger('discord')
 #logger.setLevel(logging.DEBUG)
 #handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -30,6 +32,15 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+
+    results = await db.getMaxes()
+    for id, channelID in results:
+        channel = bot.get_channel(channelID)
+        msg = await bot.get_message(channel, id)
+        async for message in bot.logs_from(channel, limit = 10000000000, after = msg.timestamp):
+            data = (message.id, message.author.id, channel.id, message.content, message.timestamp)
+            await db.addLog(data)
+    print('done loading')
     server = discord.utils.get(bot.servers, id = str(variables.serverID))
     variables.modMailChannel = discord.utils.get(server.channels, id=str(variables.modMailChannelID))
     variables.postsChannel = discord.utils.get(server.channels, id=str(variables.postID))
@@ -54,8 +65,8 @@ async def contentFilter(ctx):
 async def add(ctx):
     await command.add(bot, ctx)
 
-@bot.command()
-async def list():
+@bot.command(aliases=["list"])
+async def cmdlist():
     await command.commands(bot)
 
 @bot.command(pass_context = True)
@@ -94,15 +105,17 @@ async def remove(ctx):
 async def post(ctx):
     await command.post(bot, ctx)
 @bot.command(pass_context = True)
+async def postmatch(ctx):
+    await command.postmatch(bot, ctx)
+@bot.command(pass_context = True)
+async def posttournament(ctx):
+    await command.posttournament(bot, ctx)
+@bot.command(pass_context = True)
 async def archive(ctx):
     await command.archive(bot, ctx)
 @bot.command(pass_context = True)
 async def blacklist(ctx):
     await command.blacklist(bot, ctx)
-@bot.command(pass_context = True)
-async def logs(ctx):
-    await command.logs(bot, ctx)
-
 @bot.command(pass_context = True)
 async def total(ctx):
     await command.total(bot, ctx)
@@ -115,15 +128,14 @@ async def user(ctx):
 async def sub(ctx):
     await command.sub(bot, ctx)
 @bot.command(pass_context = True)
-async def join(ctx):
+async def joined(ctx):
     await command.join(bot, ctx)
-@bot.command(pass_context = True)
+@bot.command(pass_context = True, aliases=['wdop', 'WDOP'])
 async def whendoesopticplay(ctx):
     await command.when(bot, ctx)
 @bot.command(pass_context = True)
 async def voice(ctx):
     await v.main(bot, ctx)
-
 async def modMail():
      await bot.wait_until_ready()
      while not bot.is_closed:
@@ -175,7 +187,6 @@ async def on_member_join(member):
         saying = saying[:-1]
     s = member.mention + ", " + saying  + ". Make sure to read the rules of the server in <#155854416816242688>"
     await bot.send_message(server, s)
-
 @bot.event
 async def on_member_remove(member):
     server = member.server
@@ -193,20 +204,10 @@ async def on_message(message):
     #variables.messages.put(message)
     #if variables.logging is False:
         #asyncio.ensure_future(chatlogs.log())
-    try:
-        variables.freq[message.author.id] = variables.freq[message.author.id] + 1
-    except KeyError:
-        variables.freq[message.author.id] = 0
-    try:
-        variables.monthFreq[message.author.id] = variables.monthFreq[message.author.id] + 1
-    except KeyError:
-        variables.monthFreq[message.author.id] = 0
-    try:
-        variables.weekFreq[message.author.id] = variables.weekFreq[message.author.id] + 1
-    except KeyError:
-        variables.weekFreq[message.author.id] = 0
+    data = (message.id, message.author.id, message.channel.id, message.content, message.timestamp)
+    await db.addLog(data)
     if bot.user in message.mentions:
-        await bot.send_message(message.channel, "You tryna start something?")
+        await bot.send_message(message.channel, "Go away.")
     if message.author.id != bot.user.id:
         if "block me back" in msg.lower():
             await bot.send_message(message.channel, message.author.mention + " Blocked Back.")
@@ -218,7 +219,7 @@ async def on_message(message):
         if variables.dark:
             variables.purge.append(message)
         for cmd in variables.textCommands:
-            if msg.startswith('!' + cmd):
+            if msg.rstrip() == ('!' + cmd):
                 await bot.send_message(message.channel, variables.textCommands[cmd])
                 return
         await bot.process_commands(message)

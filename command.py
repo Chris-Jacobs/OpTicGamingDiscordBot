@@ -10,6 +10,7 @@ import datetime
 import time
 import calendar
 import twitter
+import db
 from collections import deque
 filterActive = True
 
@@ -254,107 +255,47 @@ async def blacklist(bot, ctx):
             saveConfig()
         elif string.startswith("list"):
             await bot.say(variables.blacklist)
-async def logs(bot, ctx):
-    string = ctx.message.content.replace("!logs", "").strip()
-    today = datetime.datetime.now()
-    if string.lower() == "month":
-        variables.monthFreq = {}
-        delt = timedelta(weeks = -4)
-        d = today + delt
-        async for message in bot.logs_from(ctx.message.channel, limit=2000000, after = d):
-            try:
-                variables.monthFreq[message.author.id] = variables.monthFreq[message.author.id] + 1
-            except Exception:
-                variables.monthFreq[message.author.id] = 0
-        print("Done")
-    elif string.lower() == "week":
-        variables.weekFreq = {}
-        delt = timedelta(weeks=-1)
-        d = today + delt
-        async for message in bot.logs_from(ctx.message.channel, limit=2000000, after=d):
-            try:
-                variables.weekFreq[message.author.id] = variables.weekFreq[message.author.id] + 1
-            except Exception:
-                variables.weekFreq[message.author.id] = 0
-        print("Done")
-    else:
-        #variables.freq = {}
-        #async for message in bot.logs_from(ctx.message.channel, limit= 2000000):
-        #    try:
-        #        variables.freq[message.author.id] = variables.freq[message.author.id] + 1
-        #    except Exception:
-        #        variables.freq[message.author.id] = 0
-        print("Done")
-    saveConfig()
-    await bot.say("Finished Collecting Logs.")
 
 async def leaders(bot, ctx):
     string = ctx.message.content.replace("!leaders", "").strip()
-    ret = " #"
-    list = []
-    if string.lower() == "me":
-        id = ctx.message.author.id
-        if id in variables.blacklist:
-            ret = " you have been blacklisted from the leaderboards feature."
-            await bot.send_message(ctx.message.channel, ctx.message.author.mention + ret)
-            return
-        for key in variables.freq.keys():
-            list.append((key, variables.freq[key]))
-        list = sorted(list, key=lambda x: x[1], reverse=True)
-        counter = 1
-        for user in list:
-            if user[0] == id:
-                ret += str(counter) + " all time. #"
-                break
-            counter += 1
-        list = []
-        for key in variables.monthFreq.keys():
-            list.append((key, variables.monthFreq[key]))
-        list = sorted(list, key=lambda x: x[1], reverse=True)
-        counter = 1
-        for user in list:
-            if user[0] == id:
-                ret += str(counter) + " monthly. #"
-                break
-            counter += 1
-        list = []
-        for key in variables.weekFreq.keys():
-            list.append((key, variables.weekFreq[key]))
-        list = sorted(list, key=lambda x: x[1], reverse=True)
-        counter = 1
-        for user in list:
-            if user[0] == id:
-                ret += str(counter) + " weekly."
-                break
-            counter += 1
-        await bot.send_message(ctx.message.channel, ctx.message.author.mention + ret)
-        return
-    elif string.lower() == "month":
-        dict = variables.monthFreq
-    elif string.lower() == "week":
-        dict = variables.weekFreq
+    me = False
+    if string.startswith("me"):
+        me = True
+        string = string.replace("me", "").strip()
+    date = "2016-01-01"
+    now = datetime.datetime.now()
+    if string.startswith("month"):
+        td = timedelta(days = -30)
+        date = (now + td).strftime("%Y-%m-%d %H:%M")
+    elif string.startswith("week"):
+        td = timedelta(days = -7)
+        date = (now + td).strftime("%Y-%m-%d %H:%M")
+    elif string.startswith("day"):
+        td = timedelta(days = -1)
+        date = (now + td).strftime("%Y-%m-%d %H:%M")
+    elif string.startswith("year"):
+        td = timedelta(days = -365)
+        date = (now + td).strftime("%Y-%m-%d %H:%M")
+    channels = ctx.message.channel_mentions
+    if len(channels) == 0:
+        channels = ctx.message.server.channels
+    returnString = ""
+    if not me:
+        rankings = await db.getRankings(channels, date)
+        i = 1
+        for ranking in rankings:
+            try:
+                user = await bot.get_user_info(ranking[0])
+                name = user.name
+            except discord.NotFound:
+                name = "Deleted User"
+            s = "{rank}. {name}: {total}\n".format(rank = str(i), name = name, total = str(ranking[1]))
+            returnString += s
+            i += 1
     else:
-        dict = variables.freq
-    for key in dict.keys():
-        list.append((key, dict[key]))
-    list = sorted(list, key=lambda x: x[1], reverse = True)
-    counter = 0
-    ten = []
-    while len(ten) < 10:
-        user = list[counter]
-        for member in ctx.message.server.members:
-            if member.id == user[0]:
-                if member.id not in variables.blacklist:
-                    ten.append((member.name,user[1]))
-                break
-        counter += 1
-        #print(counter)
-    string = ""
-    counter = 1
-    for user in ten:
-        string += str(counter) + ". " + user[0] + ": " + str(user[1]) + "\n"
-        counter += 1
-    await bot.say(string)
+        info = await db.getUserInfo(channels, date, ctx.message.author.id)
+        returnString = ctx.message.author.mention + " you are currently rank {num} with {messages}".format(num=info[0], messages=info[1])
+    await bot.say(returnString)
 async def join(bot, ctx):
     user = ctx.message.author
     date = user.joined_at
@@ -504,19 +445,20 @@ async def posts(bot):
         if tempID is None:
             tempID = id
         if id > variables.lastID:
-            s = "**" + title + "** *by " + user + "*\n"
-            s += "ID = '" + str(id) + "'\n"
-            s += "User = <http://www.reddit.com/u/" + user + '/overview>\n'
-            s += url + '\n'
-            print(s)
-            d.appendleft(s)
+            e = discord.Embed(
+                title=title,
+                url=url,
+                description=submission.selftext,
+                color=0x789E63)
+            e.set_footer(text='/u/' + user)
+            d.appendleft(e)
         else:
             break
     variables.lastID = tempID
     with open('id.txt', 'w') as f:
         f.write(variables.lastID)
-    for s in d:
-        await bot.send_message(variables.postsChannel, s)
+    for e in d:
+        await bot.send_message(variables.postsChannel, embed = e)
 async def remove(bot, ctx):
     if (ctx.message.server.id != str(variables.serverID)):
         return
@@ -539,16 +481,8 @@ async def remove(bot, ctx):
         await bot.say("Thread Removed: " + url)
     except Exception:
         await bot.say("Error Removing Thread: " + url)
-async def post(bot, ctx):
-    if (ctx.message.server.id != str(variables.serverID)):
-        return
-    content = ctx.message.content.replace("!post", "").strip()
-    r = praw.Reddit(client_id=variables.modClient,
-                client_secret=variables.modSecret,
-                user_agent=variables.user_agent,
-                username=variables.modUsername,
-                password=variables.modPassword)
-    #get reddit
+async def getThread(content, r):
+    print(content)
     if len(content) == 6:
         try:
             submission = r.submission(id = content)
@@ -561,6 +495,18 @@ async def post(bot, ctx):
             submission = None
     else:
         submission = None
+    return submission
+async def post(bot, ctx):
+    if (ctx.message.server.id != str(variables.serverID)):
+        return
+    content = ctx.message.content.replace("!post", "").strip()
+    r = praw.Reddit(client_id=variables.modClient,
+                client_secret=variables.modSecret,
+                user_agent=variables.user_agent,
+                username=variables.modUsername,
+                password=variables.modPassword)
+    #get reddit
+    submission = getThread(content, r)
     if submission is not None:
         title = submission.title
         body = submission.selftext
@@ -575,7 +521,30 @@ async def post(bot, ctx):
         newSubmission.mod.sticky(state = True, bottom = True)
     else:
         await bot.say("Error Finding Thread")
-
+async def postmatch(bot, ctx):
+    if (ctx.message.server.id != str(variables.serverID)):
+        return
+    content = ctx.message.content.replace("!postmatch", "").strip()
+    r = praw.Reddit(client_id=variables.modClient,
+                client_secret=variables.modSecret,
+                user_agent=variables.user_agent,
+                username=variables.modUsername,
+                password=variables.modPassword)
+    submission = await getThread(content, r)
+    print(submission)
+    if submission is not None:
+        title = submission.title.replace("Match", "Post-Match")
+        newSubmission = r.subreddit('OpTicGamingSandbox').submit(title = title, selftext = "", send_replies = False)
+        s = newSubmission.url + "\n"
+        s += "ID = '" + newSubmission.id + "'"
+        await bot.say(s)
+        submission.mod.lock()
+        
+async def posttournament(bot,ctx):
+    if (ctx.message.server.id != str(variables.serverID)):
+        return
+    content = ctx.message.content.replace("!posttournament", "").strip()
+    
 async def archive(bot, ctx):
     if (ctx.message.channel.id != str(variables.modMailChannelID)):
         return
