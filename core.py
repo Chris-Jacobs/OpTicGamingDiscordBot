@@ -205,7 +205,8 @@ async def on_message(message):
     #if variables.logging is False:
         #asyncio.ensure_future(chatlogs.log())
     data = (message.id, message.author.id, message.channel.id, message.content, message.timestamp)
-    await db.addLog(data)
+    if message.server.id == "138430437637881856":
+        await db.addLog(data)
     if bot.user in message.mentions:
         await bot.send_message(message.channel, "Go away.")
     if message.author.id != bot.user.id:
