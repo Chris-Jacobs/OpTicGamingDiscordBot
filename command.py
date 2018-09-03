@@ -450,7 +450,7 @@ async def posts(bot):
                 url=url,
                 description=submission.selftext,
                 color=0x789E63)
-            e.set_footer(text='/u/' + user)
+            e.set_footer(text='/u/' + user + " - " + str(id))
             d.appendleft(e)
         else:
             break
