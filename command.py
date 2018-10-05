@@ -445,10 +445,11 @@ async def posts(bot):
         if tempID is None:
             tempID = id
         if id > variables.lastID:
+            description = submission.selftext if len(submission.selftext) < 2048 else submission.selftext[0:2047]
             e = discord.Embed(
                 title=title,
                 url=url,
-                description=submission.selftext,
+                description=description,
                 color=0x789E63)
             e.set_footer(text='/u/' + user + " - " + str(id))
             d.appendleft(e)
@@ -506,7 +507,7 @@ async def post(bot, ctx):
                 username=variables.modUsername,
                 password=variables.modPassword)
     #get reddit
-    submission = getThread(content, r)
+    submission = await getThread(content, r)
     if submission is not None:
         title = submission.title
         body = submission.selftext
