@@ -43,7 +43,7 @@ async def on_ready():
                 msg = await bot.get_message(channel, id)
             except discord.errors.NotFound:
                 print('found deleted message')
-                id = db.getNew(id, channelID)
+                id = await db.getNew(id, channelID)
         async for message in bot.logs_from(channel, limit = 10000000000, after = msg.timestamp):
             data = (message.id, message.author.id, channel.id, message.content, message.timestamp)
             await db.addLog(data)
