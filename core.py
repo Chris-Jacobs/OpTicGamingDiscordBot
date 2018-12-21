@@ -4,7 +4,6 @@ import variables
 import command
 import logging
 import asyncio
-import chatlogs
 import datetime
 import queue
 import time
