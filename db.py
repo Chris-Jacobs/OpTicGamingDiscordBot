@@ -1,6 +1,6 @@
 import variables
 import mysql.connector
-
+from mysql.connector import IntegrityError
 conn = mysql.connector.connect(host =  variables.localIP, user = variables.dbUser, password = variables.dbPassword, database = "optic_discord")
 conn.set_charset_collation('utf8mb4', 'utf8mb4_general_ci')
 cur = conn.cursor()
@@ -13,8 +13,11 @@ async def getMaxes():
 
 async def addLog(data):
     sql = ''' INSERT INTO logs (id,user,channel,content,date) VALUES(%s,%s,%s,%s,%s) '''
-    cur.execute(sql, data)
-    conn.commit()
+    try:
+        cur.execute(sql, data)
+        conn.commit()
+    except IntegrityError as ie:
+        print(ie)
 async def getNew(oldId, channel):
     sql = 'select max(id) from logs where channel = "{channel}" and id < "{oldID}"'.format(channel = channel, oldId = oldId)
     cur.execute(sql)
