@@ -15,7 +15,10 @@ async def addLog(data):
     sql = ''' INSERT INTO logs (id,user,channel,content,date) VALUES(%s,%s,%s,%s,%s) '''
     cur.execute(sql, data)
     conn.commit()
-
+async def getNew(oldId, channel):
+    sql = 'select max(id) from logs where channel = "{channel}" and id < "{oldID}"'.format(channel = channel, oldId = oldId)
+    cur.execute(sql)
+    return cur.fetchone()
 async def getRankings(channels, date):
     channelString = "("
     for channel in channels:

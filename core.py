@@ -36,7 +36,15 @@ async def on_ready():
     results = await db.getMaxes()
     for id, channelID in results:
         channel = bot.get_channel(channelID)
-        msg = await bot.get_message(channel, id)
+        if channel is None:
+            continue
+        msg = None
+        while msg is None:
+            try:
+                msg = await bot.get_message(channel, id)
+            except discord.errors.NotFound:
+                print('found deleted message')
+                id = db.getNew(id, channelID)
         async for message in bot.logs_from(channel, limit = 10000000000, after = msg.timestamp):
             data = (message.id, message.author.id, channel.id, message.content, message.timestamp)
             await db.addLog(data)
@@ -44,7 +52,6 @@ async def on_ready():
     server = discord.utils.get(bot.servers, id = str(variables.serverID))
     variables.modMailChannel = discord.utils.get(server.channels, id=str(variables.modMailChannelID))
     variables.postsChannel = discord.utils.get(server.channels, id=str(variables.postID))
-    #asyncio.ensure_future(logging())
     asyncio.ensure_future(modMail())
     if not variables.test:
         asyncio.ensure_future(posts())
@@ -152,29 +159,6 @@ async def posts():
         except Exception:
             pass
         await asyncio.sleep(60)
-async def logging():
-     await bot.wait_until_ready()
-     current = datetime.date.today()
-     while(True):
-         counter = 0
-         while counter < 3:
-             counter += 1
-             date = datetime.date.today()
-             if(current.day != date.day):
-                 for log in logs:
-                     await variables.logs[log].writeToFile()
-                     await variables.logs[log].uploadFile()
-                 variables.logs = {}
-                 current = date
-                 break
-             await asyncio.sleep(10)
-             for log in variables.logs:
-                 print("Writing to Files")
-                 await variables.logs[log].writeToFile()
-         for log in variables.logs:
-             pass
-             #await variables.logs[log].uploadFile()
-     #google drive upload
      
 @bot.event
 async def on_member_join(member):
@@ -199,11 +183,6 @@ async def on_member_remove(member):
 @bot.event
 async def on_message(message):
     msg = message.content
-    #if message.author.id == '186866281465643008':
-        #await bot.add_reaction(message,'🇱')
-    #variables.messages.put(message)
-    #if variables.logging is False:
-        #asyncio.ensure_future(chatlogs.log())
     data = (message.id, message.author.id, message.channel.id, message.content, message.timestamp)
     if message.server.id == "138430437637881856":
         await db.addLog(data)
