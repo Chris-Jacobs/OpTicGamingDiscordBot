@@ -1,7 +1,7 @@
 import variables
 import mysql.connector
 from mysql.connector import IntegrityError
-conn = mysql.connector.connect(host =  variables.localIP, user = variables.dbUser, password = variables.dbPassword, database = "optic_discord")
+conn = mysql.connector.connect(host =  variables.keys['LocalIP'], user = variables.keys['DatabaseUser'], password = variables.keys['DatabasePassword'], database = "optic_discord")
 conn.set_charset_collation('utf8mb4', 'utf8mb4_general_ci')
 cur = conn.cursor()
 

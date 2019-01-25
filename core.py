@@ -10,7 +10,7 @@ import time
 import voice as v
 import random
 import db
-
+import streams
 #logger = logging.getLogger('discord')
 #logger.setLevel(logging.DEBUG)
 #handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -31,22 +31,22 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-
-    results = await db.getMaxes()
-    for id, channelID in results:
-        channel = bot.get_channel(channelID)
-        if channel is None:
-            continue
-        msg = None
-        while msg is None:
-            try:
-                msg = await bot.get_message(channel, id)
-            except discord.errors.NotFound:
-                print('found deleted message')
-                id = await db.getNew(id, channelID)
-        async for message in bot.logs_from(channel, limit = 10000000000, after = msg.timestamp):
-            data = (message.id, message.author.id, channel.id, message.content, message.timestamp)
-            await db.addLog(data)
+    if not variables.test:
+        results = await db.getMaxes()
+        for id, channelID in results:
+            channel = bot.get_channel(channelID)
+            if channel is None:
+                continue
+            msg = None
+            while msg is None:
+                try:
+                    msg = await bot.get_message(channel, id)
+                except discord.errors.NotFound:
+                    print('found deleted message')
+                    id = await db.getNew(id, channelID)
+            async for message in bot.logs_from(channel, limit = 10000000000, after = msg.timestamp):
+                data = (message.id, message.author.id, channel.id, message.content, message.timestamp)
+                await db.addLog(data)
     print('done loading')
     server = discord.utils.get(bot.servers, id = str(variables.serverID))
     variables.modMailChannel = discord.utils.get(server.channels, id=str(variables.modMailChannelID))
@@ -127,6 +127,9 @@ async def total(ctx):
     await command.total(bot, ctx)
 
 @bot.command(pass_context = True)
+async def twitch (ctx):
+    await streams.command(bot, ctx)
+@bot.command(pass_context = True)
 async def user(ctx):
     await command.user(bot, ctx)
 
@@ -202,5 +205,9 @@ async def on_message(message):
                 await bot.send_message(message.channel, variables.textCommands[cmd])
                 return
         await bot.process_commands(message)
+
+#@bot.event
+#async def on_voice_state_update(before, after):
+#    await v.change(bot, before, after)
 
 bot.run(variables.token)

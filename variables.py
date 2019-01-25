@@ -2,10 +2,13 @@ import queue
 import datetime
 import time
 import sqlite3
-conn = sqlite3.connect('keys.db')
-c = conn.cursor()
-username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest, modUsername, modPassword, modSecret, modClient, twitterKey, twitterSecret, twitterToken, twitterTokenSecret, localIP, dbUser, dbPassword, externalIP  = c.execute("SELECT * FROM Keys").fetchone()
-c.close()
+import json
+#conn = sqlite3.connect('keys.db')
+#c = conn.cursor()
+#username, password, user_agent, twitchKey, client_secret, client_id, ytKey, imgurID, imgurSecret, schedulerbase, token,tokenTest, modUsername, modPassword, modSecret, modClient, twitterKey, twitterSecret, twitterToken, twitterTokenSecret, localIP, dbUser, dbPassword, externalIP  = c.execute("SELECT * FROM Keys").fetchone()
+#c.close()
+with open('keys.json') as f:
+    keys = json.load(f)
 
 modMailChannel = None
 postsChannel = None
@@ -14,13 +17,14 @@ serverID = 305374394266681345
 modMailChannelID = 309392299664867328
 postID = 357559384529698816
 voiceID = 360589014325264395
+token = keys['DiscordToken']
 test = False
 if test:
     serverID = 252969515200020501
     modMailChannelID = 309394244932599818
     postID = 407635043163308032
     voiceID = 440226989316636675
-    token = tokenTest
+    token = keys['DiscordTestToken']
 
 sayings = {}
 
